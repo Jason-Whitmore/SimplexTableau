@@ -320,19 +320,6 @@ public class Tableau{
         }
     }
 
-    /**
-     * 
-     */
-    private void printTableau(){
-        for(int r = 0; r < numRows; r++){
-            for(int c = 0; c < numCols; c++){
-                System.out.print(tableau[r][c] + " ");
-            }
-            System.out.println();
-        }
-    }
-
-
 
 
     public static void main(String args[]){
@@ -358,7 +345,7 @@ public class Tableau{
 
         //Obtain solution when finished
 
-        double optOFValue = -s.getOFValue();
+        double optOFValue = s.getOFValue();
 
         double[] solution = s.getBFS();
 
