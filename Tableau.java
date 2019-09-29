@@ -1,21 +1,35 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.*;
 
 
-
+/**
+ * Class that provides the data structure and functionality to load and solve canonical form linear programs.
+ */
 public class Tableau{
 
+    /**
+     * The primary structure to hold the linear program inside of a 2d array or matrix.
+     */
     private double[][] tableau;
 
-    int numRows;
+    /**
+     * The number of rows in the tableau.
+     */
+    private int numRows;
 
-    int numCols;
+    /**
+     * The number of columns in the tableau.
+     */
+    private int numCols;
 
 
 
-
+    /**
+     * Constructor for a tableau that takes in an external text file for input.
+     * 
+     * @param fileName Text file containing the tableau in canonical form. Rows should be separated with newlines, entries within rows by spaces.
+     */
     public Tableau(String fileName){
         File f = new File(fileName);
 
@@ -38,6 +52,8 @@ public class Tableau{
                 temp.add(rowNumbers);
             }
 
+            s.close();
+
         } catch (FileNotFoundException e) {
             System.err.println("File not found.");
             System.exit(1);
@@ -58,11 +74,18 @@ public class Tableau{
 
     }
 
+    /**
+     * Constructure that takes in a pre formed matrix as the tableau
+     * @param tableau The pre formed matrix
+     */
     public Tableau(double[][] tableau){
         setTableau(tableau);
     }
 
-
+    /**
+     * Sets the tableau and changes dimension values to match
+     * @param newTableau The tableau to set.
+     */
     public void setTableau(double[][] newTableau){
         this.tableau = newTableau;
 
@@ -70,12 +93,18 @@ public class Tableau{
         this.numCols = newTableau[0].length;
     }
 
-
+    /**
+     * Retrieves the tableau
+     * @return The tableau as a 2d array of doubles
+     */
     public double[][] getTableau(){
         return this.tableau;
     }
 
-
+    /**
+     * Retrieves the B vector (leftmost column except for the top left entry)
+     * @return The B vector as a double array.
+     */
     private double[] getBVector(){
         double[] ret = new double[numRows - 1];
 
@@ -86,7 +115,10 @@ public class Tableau{
         return ret;
     }
 
-
+    /**
+     * Gets the Basic Feasible solution off of the tableau.
+     * @return The BFS as an array of doubles where resource x_i is at index i - 1
+     */
     private double[] getBFS(){
         double[] ret = new double[numCols - 1];
 
@@ -111,7 +143,11 @@ public class Tableau{
         return ret;
     }
 
-
+    /**
+     * Determines if the column is an I column (a column with a zeroes except for a one. Excludes first row)
+     * @param colIndex The column index to determine if it's an i column
+     * @return The row which the only 1 exists on. If it's not an I column, return -1
+     */
     private int isIColumn(int colIndex){
         //Linear search down the column, search for only a single 1 entry
         boolean oneFound = false;
@@ -140,6 +176,15 @@ public class Tableau{
         return iColumnIndex;
     }
 
+
+    /**
+     * Checks to see if tableau is in canonnical form, which is an important requirement before the simplex algorithm can be performed.
+     * Requirements: 
+     * -Non negative B vector (leftmost column excluding index [0][0])
+     * -All Identity columns exist in the constraints section of the tableau of size numRows - 1
+     * -In each column with an identity column, there must be a 0 in the C vector (top row excluding index [0][0])
+     * @return True if tableau is in canonical form, else false
+     */
     private boolean isInCanonicalForm(){
 
         //check B vector
@@ -183,11 +228,19 @@ public class Tableau{
     }
 
 
-
+    /**
+     * Quickly accesses the objective function value in the tableau
+     * @return The objective function value
+     */
     private double getOFValue(){
         return tableau[0][0];
     }
 
+    /**
+     * Performs a pivot operation on an entry in the tableau
+     * @param row The row of the target entry
+     * @param column The column of the target entry
+     */
     private void pivot(int row, int column){
 
         //perform operations on each row such that all numbers in the column except for the pivot become zero
@@ -215,6 +268,10 @@ public class Tableau{
 
     }
 
+    /**
+     * Determines if the tableau in it's current state is optimal. Checks the top row of the tableau
+     * @return True if the tableau is optimal, else false.
+     */
     public boolean isOptimal(){
 
         for(int i = 1; i < numCols; i++){
@@ -226,19 +283,47 @@ public class Tableau{
         return true;
     }
 
-
+    /**
+     * Optimizes the tableau using the Simplex algorithm. 
+     */
     public void optimize(){
 
-
+        ///Keep pivoting until an optimal tableau is achieved.
         while(!isOptimal()){
             //Find pivot position using both minimum ratio and smallest index rule
 
+            int bestRow = -1;
+            int bestCol = -1;
+            double bestRatio = Double.POSITIVE_INFINITY;
 
-            //perform pivot
+            //loop from last col to first col to adhere to minimum index rule (prevents cycling)
+            for(int c = numCols - 1; c > 0; c--){
+                if(tableau[0][c] < 0){
+                    for(int r = numRows - 1; r > 0; r--){
+                        if(tableau[r][c] != 0){
+                            double ratio = tableau[r][0] / tableau[r][c];
+    
+                            if(ratio >= 0 && ratio < bestRatio){
+                                bestRow = r;
+                                bestCol = c;
+    
+                                bestRatio = ratio;
+                            }
+                        }
+                    }
+                }
+                
+                
+            }
+
+            pivot(bestRow, bestCol);
         }
     }
 
-    public void printTableau(){
+    /**
+     * 
+     */
+    private void printTableau(){
         for(int r = 0; r < numRows; r++){
             for(int c = 0; c < numCols; c++){
                 System.out.print(tableau[r][c] + " ");
@@ -251,15 +336,39 @@ public class Tableau{
 
 
     public static void main(String args[]){
-        Tableau s = new Tableau("test.txt");
-
-        System.out.println(s.isInCanonicalForm());
-
-        double[] bfs = s.getBFS();
-
-        for(int i = 0; i < bfs.length; i++){
-            System.out.println(bfs[i]);
+        if(args.length != 1){
+            System.err.println("One argument required: name of text file containing the linear program as a canonical form tableau.");
+            System.err.println("Format: Rows in the tableau are separated using new line characters, while entries within the row are separated with spaces.");
+            System.exit(1);
         }
+
+        Tableau s = new Tableau(args[0]);
+
+        boolean isInCF = s.isInCanonicalForm();
+
+        if(!isInCF){
+            System.err.println("Input tableau is not in canonical form. Cannot solve.");
+            System.exit(2);
+        }
+
+        //Input tableau is in canonical form. Solving...
+
+        s.optimize();
+
+
+        //Obtain solution when finished
+
+        double optOFValue = -s.getOFValue();
+
+        double[] solution = s.getBFS();
+
+        System.out.println("Optimial solution: ");
+
+        for(int i = 0; i < solution.length; i++){
+            System.out.println("x_" + (i + 1) + " = " + solution[i]);
+        }
+
+        System.out.println("\nOptimal solution objective function value: " + optOFValue);
         
     }
 }
