@@ -29,7 +29,7 @@ For the objective function, we simply put the profit of each drink as the scalar
 
 If you plot these inequalities for this problem, you get the following:
 
-IMAGE HERE
+![alt text](https://github.com/Jason-Whitmore/SimplexTableau/blob/master/feasible.png "Feasible region")
 
 The area bounded by the polygon is called the feasible region. As implied, that area represents the possible combinations of x_1 and x_2. Of course, there are plenty of configurations that that don't "max out" a resource, namely anything that isn't on the edges. The simplex algorithm will walk along the edges of the feasible region to each corner, where the optimal solution will be found
 
@@ -37,7 +37,10 @@ The area bounded by the polygon is called the feasible region. As implied, that 
 
 In order to feed the linear program into the simplex algorithm correctly, we need to put the LP into a canonical form tableau. As mentioned before, a tableau is a partitioned matrix with the format:
 
-IMAGE HERE
+|Z|C|
+|----|----|
+|B|A|
+
 
 Where Z is the objective function value (in our case, total profit), C is the transposed vector containing the scalars that constribute to the objective function value (profit per type of drink), B is the vector containing the constraint constants for each type of resource (amount of a resource in inventory), and A is the matrix containing how much resource of each is used per x_i.
 
@@ -48,7 +51,11 @@ Overall, canonical forms require all the column of an indentity matrix of size r
 Our lemonade stand tableau would then become:
 
 
-TABLE HERE
+|0|-1|-1.1|0|0|0|
+|----|----|----|----|----|----|
+|1|0.01|0.005|1|0|0|
+|20|1.5|1|0|1|0|
+|50|0|6|0|0|1|
 
 
 Notice that in the objective function row, the profits of 1 and 1.1 are negative. This is because a tableau technically minimizes an objective function, so we have to trick it by multiplying those constants by -1. This may also mean that the objective function value may be negative, depending on your application, and should also be multiplied by -1.
